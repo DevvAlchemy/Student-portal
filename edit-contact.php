@@ -3,7 +3,7 @@ $pageTitle = "Edit Contact";
 require_once 'config/database.php';
 require_once 'includes/header.php';
 
-// Getting contact ID
+// Get contact ID
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($id <= 0) {
@@ -12,7 +12,7 @@ if ($id <= 0) {
     exit();
 }
 
-// Fetching contact data
+// Fetch contact data
 $sql = "SELECT * FROM contacts WHERE id = ?";
 $result = $db->select($sql, [$id], "i");
 
@@ -130,10 +130,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="form-group">
         <label for="profile_image">Profile Image</label>
         <div>
-            <img src="uploads/profiles/<?php echo htmlspecialchars($contact['profile_image']); ?>" 
+            <img src="/student-portal/uploads/profiles/<?php echo htmlspecialchars($contact['profile_image']); ?>" 
                  alt="Current Profile" 
                  class="profile-image-large"
-                 onerror="this.src='assets/images/default.jpg'">
+                 onerror="this.src='/student-portal/assets/images/default.jpg'">
         </div>
         <input type="file" id="profile_image" name="profile_image" accept="image/*">
         <small>Leave empty to keep current image</small>

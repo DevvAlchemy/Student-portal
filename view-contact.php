@@ -28,10 +28,10 @@ $contact = $result->fetch_assoc();
 <h2>Contact Details</h2>
 
 <div style="text-align: center;">
-    <img src="uploads/profiles/<?php echo htmlspecialchars($contact['profile_image']); ?>" 
+    <img src="/student-portal/uploads/profiles/<?php echo htmlspecialchars($contact['profile_image']); ?>" 
          alt="Profile" 
          class="profile-image-large"
-         onerror="this.src='assets/images/default.jpg'">
+         onerror="this.src='/student-portal/assets/images/default.jpg'">
 </div>
 
 <div class="contact-details">

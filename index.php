@@ -26,10 +26,10 @@ $result = $db->select($sql);
                 <?php while ($contact = $result->fetch_assoc()): ?>
                     <tr>
                         <td>
-                            <img src="uploads/profiles/<?php echo htmlspecialchars($contact['profile_image']); ?>" 
+                            <img src="/student-portal/uploads/profiles/<?php echo htmlspecialchars($contact['profile_image']); ?>" 
                                  alt="Profile" 
                                  class="profile-image"
-                                 onerror="this.src='assets/images/default.jpg'">
+                                 onerror="this.src='/student-portal/assets/images/default.png'">
                         </td>
                         <td><?php echo htmlspecialchars($contact['name']); ?></td>
                         <td><?php echo htmlspecialchars($contact['email']); ?></td>

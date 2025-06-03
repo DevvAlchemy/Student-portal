@@ -44,6 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadPath)) {
                 $profileImage = $newFileName;
+                // Temporary debug code
+            if (!empty($_FILES['profile_image']['name'])) {
+                echo "Upload attempt: " . $_FILES['profile_image']['name'] . "<br>";
+                echo "Upload error: " . $_FILES['profile_image']['error'] . "<br>";
+                echo "Upload path: " . $uploadPath . "<br>";
+                echo "File exists: " . (file_exists($uploadPath) ? 'Yes' : 'No') . "<br>";
+            }
+
             } else {
                 $errors[] = "Failed to upload image";
             }
