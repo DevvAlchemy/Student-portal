@@ -32,33 +32,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Handling file upload
-    $profileImage = 'default.jpg';
-    if (!empty($_FILES['profile_image']['name']) && empty($errors)) {
-        $uploadDir = 'uploads/profiles/';
-        $fileExtension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+$profileImage = 'default.jpg';
+if (!empty($_FILES['profile_image']['name']) && empty($errors)) {
+    echo "<pre>DEBUG - File Upload Info:\n";
+    print_r($_FILES['profile_image']);
+    echo "</pre>";
+    
+    $uploadDir = 'uploads/profiles/';
+    $fileExtension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+    
+    if (in_array($fileExtension, $allowedExtensions)) {
+        $newFileName = uniqid() . '.' . $fileExtension;
+        $uploadPath = $uploadDir . $newFileName;
         
-        if (in_array($fileExtension, $allowedExtensions)) {
-            $newFileName = uniqid() . '.' . $fileExtension;
-            $uploadPath = $uploadDir . $newFileName;
-            
-            if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadPath)) {
-                $profileImage = $newFileName;
-                // Temporary debug code
-            if (!empty($_FILES['profile_image']['name'])) {
-                echo "Upload attempt: " . $_FILES['profile_image']['name'] . "<br>";
-                echo "Upload error: " . $_FILES['profile_image']['error'] . "<br>";
-                echo "Upload path: " . $uploadPath . "<br>";
-                echo "File exists: " . (file_exists($uploadPath) ? 'Yes' : 'No') . "<br>";
-            }
-
-            } else {
-                $errors[] = "Failed to upload image";
-            }
+        echo "Attempting to move from: " . $_FILES['profile_image']['tmp_name'] . "<br>";
+        echo "To: " . $uploadPath . "<br>";
+        
+        if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadPath)) {
+            $profileImage = $newFileName;
+            echo "SUCCESS - File uploaded as: " . $newFileName . "<br>";
         } else {
-            $errors[] = "Invalid image format. Allowed: JPG, JPEG, PNG, GIF";
+            $errors[] = "Failed to upload image";
+            echo "FAILED - Error: " . error_get_last()['message'] . "<br>";
         }
+    } else {
+        $errors[] = "Invalid image format. Allowed: JPG, JPEG, PNG, GIF";
     }
+    
+    // Don't exit - let the form continue
+    echo "<hr>";
+}
     
     // Insert contact if no errors
     if (empty($errors)) {
@@ -119,10 +123,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php 
 require_once 'includes/footer.php';
 ?>
-
-
-    <!-- header("Location: index.php"); // Redirect back
-} catch (PDOException $e) {
-    die("Error: " . $e->getMessage());
-}
-?> -->

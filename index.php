@@ -6,10 +6,17 @@ require_once 'includes/header.php';
 // Fetch all contacts
 $sql = "SELECT * FROM contacts ORDER BY created_at DESC";
 $result = $db->select($sql);
+
+// Debug code
+if ($result && $result->num_rows > 0) {
+    $test = $result->fetch_assoc();
+    echo "Debug - Image filename in DB: " . $test['profile_image'] . "<br>";
+    echo "Debug - Full path: /student-portal/uploads/profiles/" . $test['profile_image'] . "<br>";
+    echo "Debug - File exists: " . (file_exists(__DIR__ . '/uploads/profiles/' . $test['profile_image']) ? 'Yes' : 'No') . "<br><br>";
+    $result->data_seek(0); // Reset result pointer
+}
 ?>
-
 <h2>All Contacts</h2>
-
 <?php if ($result && $result->num_rows > 0): ?>
     <div class="table-responsive">
         <table>
@@ -29,7 +36,7 @@ $result = $db->select($sql);
                             <img src="/student-portal/uploads/profiles/<?php echo htmlspecialchars($contact['profile_image']); ?>" 
                                  alt="Profile" 
                                  class="profile-image"
-                                 onerror="this.src='/student-portal/assets/images/default.png'">
+                                 onerror="this.src='/student-portal/assets/images/default.jpg'">
                         </td>
                         <td><?php echo htmlspecialchars($contact['name']); ?></td>
                         <td><?php echo htmlspecialchars($contact['email']); ?></td>
