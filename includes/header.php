@@ -1,8 +1,7 @@
 <?php
 // Start session for flash messages
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../config/session.php';
+SecureSession::requireLogin(); // Protect all pages by default
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,6 +19,12 @@ if (session_status() === PHP_SESSION_NONE) {
                 <ul>
                     <li><a href="index.php">All Contacts</a></li>
                     <li><a href="add-contact.php">Add Contact</a></li>
+                    <li style="margin-left: auto;">
+                        <span style="color: white; margin-right: 1rem;">
+                            Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>
+                        </span>
+                        <a href="logout.php">Logout</a>
+                    </li>
                 </ul>
             </nav>
         </header>
