@@ -1,7 +1,12 @@
 <?php
 $pageTitle = "Edit Contact";
 require_once 'config/database.php';
+require_once 'config/category.php';
 require_once 'includes/header.php';
+
+// Get categories for dropdown
+$categoryObj = new Category();
+$categories = $categoryObj->getAllCategories();
 
 // Get contact ID
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -30,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $address = trim($_POST['address'] ?? '');
+    $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
     
     // Validate required fields
     $errors = [];
@@ -79,8 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Update contact if no errors
     if (empty($errors)) {
-        $sql = "UPDATE contacts SET name = ?, email = ?, phone = ?, address = ?, profile_image = ? WHERE id = ?";
-        $success = $db->execute($sql, [$name, $email, $phone, $address, $profileImage, $id], "sssssi");
+        $sql = "UPDATE contacts SET name = ?, email = ?, phone = ?, address = ?, category_id = ?, profile_image = ? WHERE id = ?";
+        $success = $db->execute($sql, [$name, $email, $phone, $address, $categoryId, $profileImage, $id], "ssssssi");
         
         if ($success) {
             $_SESSION['success'] = "Contact updated successfully!";
@@ -125,6 +131,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="form-group">
         <label for="address">Address</label>
         <textarea id="address" name="address"><?php echo htmlspecialchars($_POST['address'] ?? $contact['address']); ?></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label for="category_id">Category</label>
+        <select id="category_id" name="category_id">
+            <option value="">Select a category</option>
+            <?php foreach ($categories as $category): ?>
+                <option value="<?php echo $category['id']; ?>" 
+                        <?php echo (isset($_POST['category_id']) ? $_POST['category_id'] : $contact['category_id']) == $category['id'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($category['name']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
     </div>
     
     <div class="form-group">

@@ -1,7 +1,12 @@
 <?php
 $pageTitle = "Add Contact";
 require_once 'config/database.php';
+require_once 'config/category.php';
 require_once 'includes/header.php';
+
+// Get categories for dropdown
+$categoryObj = new Category();
+$categories = $categoryObj->getAllCategories();
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -9,8 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $address = trim($_POST['address'] ?? '');
+    $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
     
-    // Validating required fields
+    // Validate required fields
     $errors = [];
     if (empty($name)) {
         $errors[] = "Name is required";
@@ -31,43 +37,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Handling file upload
-$profileImage = 'default.jpg';
-if (!empty($_FILES['profile_image']['name']) && empty($errors)) {
-    echo "<pre>DEBUG - File Upload Info:\n";
-    print_r($_FILES['profile_image']);
-    echo "</pre>";
-    
-    $uploadDir = 'uploads/profiles/';
-    $fileExtension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
-    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-    
-    if (in_array($fileExtension, $allowedExtensions)) {
-        $newFileName = uniqid() . '.' . $fileExtension;
-        $uploadPath = $uploadDir . $newFileName;
+    // Handle file upload
+    $profileImage = 'default.jpg';
+    if (!empty($_FILES['profile_image']['name']) && empty($errors)) {
+        $uploadDir = 'uploads/profiles/';
+        $fileExtension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
         
-        echo "Attempting to move from: " . $_FILES['profile_image']['tmp_name'] . "<br>";
-        echo "To: " . $uploadPath . "<br>";
-        
-        if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadPath)) {
-            $profileImage = $newFileName;
-            echo "SUCCESS - File uploaded as: " . $newFileName . "<br>";
+        if (in_array($fileExtension, $allowedExtensions)) {
+            $newFileName = uniqid() . '.' . $fileExtension;
+            $uploadPath = $uploadDir . $newFileName;
+            
+            if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadPath)) {
+                $profileImage = $newFileName;
+            } else {
+                $errors[] = "Failed to upload image";
+            }
         } else {
-            $errors[] = "Failed to upload image";
-            echo "FAILED - Error: " . error_get_last()['message'] . "<br>";
+            $errors[] = "Invalid image format. Allowed: JPG, JPEG, PNG, GIF";
         }
-    } else {
-        $errors[] = "Invalid image format. Allowed: JPG, JPEG, PNG, GIF";
     }
-    
-    // Don't exit - let the form continue
-    echo "<hr>";
-}
     
     // Insert contact if no errors
     if (empty($errors)) {
-        $sql = "INSERT INTO contacts (name, email, phone, address, profile_image) VALUES (?, ?, ?, ?, ?)";
-        $success = $db->execute($sql, [$name, $email, $phone, $address, $profileImage], "sssss");
+        $sql = "INSERT INTO contacts (name, email, phone, address, category_id, profile_image) VALUES (?, ?, ?, ?, ?, ?)";
+        $success = $db->execute($sql, [$name, $email, $phone, $address, $categoryId, $profileImage], "ssssss");
         
         if ($success) {
             $_SESSION['success'] = "Contact added successfully!";
@@ -109,6 +103,19 @@ if (!empty($_FILES['profile_image']['name']) && empty($errors)) {
     <div class="form-group">
         <label for="address">Address</label>
         <textarea id="address" name="address"><?php echo htmlspecialchars($_POST['address'] ?? ''); ?></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label for="category_id">Category</label>
+        <select id="category_id" name="category_id">
+            <option value="">Select a category</option>
+            <?php foreach ($categories as $category): ?>
+                <option value="<?php echo $category['id']; ?>" 
+                        <?php echo (isset($_POST['category_id']) && $_POST['category_id'] == $category['id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($category['name']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
     </div>
     
     <div class="form-group">

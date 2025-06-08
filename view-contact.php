@@ -12,8 +12,11 @@ if ($id <= 0) {
     exit();
 }
 
-// Fetch contact data
-$sql = "SELECT * FROM contacts WHERE id = ?";
+// Fetch contact data with category
+$sql = "SELECT c.*, cat.name as category_name, cat.color as category_color 
+        FROM contacts c 
+        LEFT JOIN categories cat ON c.category_id = cat.id 
+        WHERE c.id = ?";
 $result = $db->select($sql, [$id], "i");
 
 if (!$result || $result->num_rows === 0) {
@@ -53,6 +56,19 @@ $contact = $result->fetch_assoc();
     <div class="detail-row">
         <div class="detail-label">Address:</div>
         <div><?php echo nl2br(htmlspecialchars($contact['address'] ?: 'Not provided')); ?></div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">Category:</div>
+        <div>
+            <?php if ($contact['category_name']): ?>
+                <span class="category-badge" style="background-color: <?php echo htmlspecialchars($contact['category_color']); ?>">
+                    <?php echo htmlspecialchars($contact['category_name']); ?>
+                </span>
+            <?php else: ?>
+                <span class="category-badge" style="background-color: #95a5a6">Uncategorized</span>
+            <?php endif; ?>
+        </div>
     </div>
     
     <div class="detail-row">

@@ -17,13 +17,16 @@ SecureSession::requireLogin(); // Protect all pages by default
             <h1>Student Management Portal</h1>
             <nav>
                 <ul>
-                    <li><a href="index.php">All Contacts</a></li>
-                    <li><a href="add-contact.php">Add Contact</a></li>
+                    <li><a href="/student-portal/index.php">All Contacts</a></li>
+                    <li><a href="/student-portal/add-contact.php">Add Contact</a></li>
+                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                        <li><a href="/student-portal/manage-categories.php">Categories</a></li>
+                    <?php endif; ?>
                     <li style="margin-left: auto;">
                         <span style="color: white; margin-right: 1rem;">
                             Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>
                         </span>
-                        <a href="logout.php">Logout</a>
+                        <a href="/student-portal/logout.php">Logout</a>
                     </li>
                 </ul>
             </nav>
