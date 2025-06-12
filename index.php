@@ -2,6 +2,7 @@
 $pageTitle = "All Contacts";
 require_once 'config/database.php';
 require_once 'config/category.php';
+// require_once 'config/pagination.php';
 require_once 'includes/header.php';
 
 // Initialize category class
@@ -12,12 +13,75 @@ $categories = $categoryObj->getAllCategories();
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $categoryFilter = isset($_GET['category']) ? (int)$_GET['category'] : 0;
 
-// Build SQL query with search and category filters
+// Get current page from URL
+$currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+
+// Items per page (make this configurable)
+$itemsPerPage = 10;
+
+// First, count total items for pagination
+$countSql = "SELECT COUNT(*) as total 
+             FROM contacts c 
+             WHERE 1=1";
+
+$params = [];
+$types = "";
+
+// Get items per page from URL or session
+$itemsPerPage = 10; // default
+if (isset($_GET['per_page'])) {
+    $itemsPerPage = (int)$_GET['per_page'];
+    $_SESSION['items_per_page'] = $itemsPerPage;
+} elseif (isset($_SESSION['items_per_page'])) {
+    $itemsPerPage = $_SESSION['items_per_page'];
+}
+
+// Validate items per page
+$allowedPerPage = [5, 10, 25, 50, 100];
+if (!in_array($itemsPerPage, $allowedPerPage)) {
+    $itemsPerPage = 10;
+}
+
+
+// Add search condition if search term exists
+if (!empty($search)) {
+    $countSql .= " AND (c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)";
+    $searchTerm = "%{$search}%";
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+    $types .= "sss";
+}
+
+// Add category filter if selected
+if ($categoryFilter > 0) {
+    $countSql .= " AND c.category_id = ?";
+    $params[] = $categoryFilter;
+    $types .= "i";
+}
+
+// Get total count
+if (!empty($params)) {
+    $countResult = $db->select($countSql, $params, $types);
+} else {
+    $countResult = $db->select($countSql);
+}
+
+$totalItems = 0;
+if ($countResult && $countResult->num_rows > 0) {
+    $totalItems = $countResult->fetch_assoc()['total'];
+}
+
+// Initialize pagination
+$pagination = new Pagination($totalItems, $itemsPerPage, $currentPage);
+
+// Build main query with pagination
 $sql = "SELECT c.*, cat.name as category_name, cat.color as category_color 
         FROM contacts c 
         LEFT JOIN categories cat ON c.category_id = cat.id 
         WHERE 1=1";
 
+// Reuse the same params and types for the main query
 $params = [];
 $types = "";
 
@@ -38,7 +102,8 @@ if ($categoryFilter > 0) {
     $types .= "i";
 }
 
-$sql .= " ORDER BY c.created_at DESC";
+// Add ordering and pagination
+$sql .= " ORDER BY c.created_at DESC " . $pagination->getSqlLimit();
 
 // Execute query
 if (!empty($params)) {
@@ -83,8 +148,7 @@ if (!empty($params)) {
 <?php if (!empty($search) || $categoryFilter > 0): ?>
     <div class="results-info">
         <?php 
-        $count = $result ? $result->num_rows : 0;
-        echo "Found {$count} contact(s)";
+        echo "Found {$totalItems} contact(s)";
         if (!empty($search)) echo " matching '{$search}'";
         if ($categoryFilter > 0) {
             $selectedCategory = array_filter($categories, function($cat) use ($categoryFilter) {
