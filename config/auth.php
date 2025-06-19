@@ -5,7 +5,7 @@ require_once 'session.php';
 class Auth {
     private $db;
     private $maxLoginAttempts = 5;
-    private $lockoutTime = 900; // 15 minutes
+    private $lockoutTime = 60; // 1 minute (60 seconds)
     
     public function __construct() {
         global $db;
@@ -46,8 +46,14 @@ class Auth {
     }
     
     public function login($username, $password, $remember = false) {
+        // Debug mode
+        $debug = isset($_GET['debug']) && $_GET['debug'] === '1';
+        
         // Check if account is locked
         if ($this->isAccountLocked($username)) {
+            if ($debug) {
+                error_log("Auth Debug: Account is locked for user: $username");
+            }
             return ['success' => false, 'error' => 'Account temporarily locked due to too many failed attempts. Please try again later.'];
         }
         
@@ -57,6 +63,10 @@ class Auth {
         
         if ($result && $result->num_rows === 1) {
             $user = $result->fetch_assoc();
+            
+            if ($debug) {
+                error_log("Auth Debug: User found - Failed attempts: " . $user['failed_attempts']);
+            }
             
             // Verify password
             if (password_verify($password, $user['password_hash'])) {
@@ -80,6 +90,10 @@ class Auth {
         
         // Record failed attempt
         $this->recordFailedAttempt($username);
+        
+        if ($debug) {
+            error_log("Auth Debug: Failed login attempt recorded for: $username");
+        }
         
         return ['success' => false, 'error' => 'Invalid username or password.'];
     }
@@ -160,9 +174,21 @@ class Auth {
         if ($result && $result->num_rows === 1) {
             $user = $result->fetch_assoc();
             
+            // Debug logging
+            if (isset($_GET['debug']) && $_GET['debug'] === '1') {
+                error_log("Auth Debug - isAccountLocked: Failed attempts = " . $user['failed_attempts'] . 
+                         ", Last attempt = " . ($user['last_failed_attempt'] ?? 'NULL'));
+            }
+            
             if ($user['failed_attempts'] >= $this->maxLoginAttempts && $user['last_failed_attempt']) {
                 $lockoutEnd = strtotime($user['last_failed_attempt']) + $this->lockoutTime;
-                if (time() < $lockoutEnd) {
+                $currentTime = time();
+                
+                if (isset($_GET['debug']) && $_GET['debug'] === '1') {
+                    error_log("Auth Debug - Lockout check: Current time = $currentTime, Lockout ends = $lockoutEnd, Remaining = " . ($lockoutEnd - $currentTime));
+                }
+                
+                if ($currentTime < $lockoutEnd) {
                     return true;
                 }
             }

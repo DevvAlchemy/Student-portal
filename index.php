@@ -1,8 +1,12 @@
 <?php
+//temp error debugging info
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 $pageTitle = "All Contacts";
 require_once 'config/database.php';
 require_once 'config/category.php';
-// require_once 'config/pagination.php';
+require_once 'config/pagination.php';
 require_once 'includes/header.php';
 
 // Initialize category class
@@ -15,17 +19,6 @@ $categoryFilter = isset($_GET['category']) ? (int)$_GET['category'] : 0;
 
 // Get current page from URL
 $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-
-// Items per page (make this configurable)
-$itemsPerPage = 10;
-
-// First, count total items for pagination
-$countSql = "SELECT COUNT(*) as total 
-             FROM contacts c 
-             WHERE 1=1";
-
-$params = [];
-$types = "";
 
 // Get items per page from URL or session
 $itemsPerPage = 10; // default
@@ -42,6 +35,13 @@ if (!in_array($itemsPerPage, $allowedPerPage)) {
     $itemsPerPage = 10;
 }
 
+// First, count total items for pagination
+$countSql = "SELECT COUNT(*) as total 
+             FROM contacts c 
+             WHERE 1=1";
+
+$params = [];
+$types = "";
 
 // Add search condition if search term exists
 if (!empty($search)) {
@@ -144,19 +144,41 @@ if (!empty($params)) {
     </form>
 </div>
 
+<!-- Display options -->
+<div class="display-options">
+    <form method="GET" action="" class="per-page-form">
+        <!-- Preserve search and category parameters -->
+        <?php if (!empty($search)): ?>
+            <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+        <?php endif; ?>
+        <?php if ($categoryFilter > 0): ?>
+            <input type="hidden" name="category" value="<?php echo $categoryFilter; ?>">
+        <?php endif; ?>
+        
+        <label for="per_page">Show:</label>
+        <select name="per_page" id="per_page" onchange="this.form.submit()">
+            <?php foreach ($allowedPerPage as $value): ?>
+                <option value="<?php echo $value; ?>" <?php echo $itemsPerPage == $value ? 'selected' : ''; ?>>
+                    <?php echo $value; ?> per page
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </form>
+</div>
+
 <!-- Results count -->
 <?php if (!empty($search) || $categoryFilter > 0): ?>
     <div class="results-info">
         <?php 
         echo "Found {$totalItems} contact(s)";
-        if (!empty($search)) echo " matching '{$search}'";
+        if (!empty($search)) echo " matching '" . htmlspecialchars($search) . "'";
         if ($categoryFilter > 0) {
             $selectedCategory = array_filter($categories, function($cat) use ($categoryFilter) {
                 return $cat['id'] == $categoryFilter;
             });
             if ($selectedCategory) {
                 $catName = reset($selectedCategory)['name'];
-                echo " in category '{$catName}'";
+                echo " in category '" . htmlspecialchars($catName) . "'";
             }
         }
         ?>
@@ -211,6 +233,10 @@ if (!empty($params)) {
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination -->
+    <?php echo $pagination->render(); ?>
+    
 <?php else: ?>
     <div class="no-results">
         <?php if (!empty($search) || $categoryFilter > 0): ?>
